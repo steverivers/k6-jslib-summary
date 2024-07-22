@@ -277,44 +277,49 @@ function summarizeMetrics(options, data, decorate) {
   var numTrendColumns = options.summaryTrendStats.length;
   var trendColMaxLens = new Array(numTrendColumns).fill(0);
   forEach(data.metrics, function (name, metric) {
-    names.push(name);
-    // When calculating widths for metrics, account for the indentation on submetrics.
-    var displayName = indentForMetric(name) + displayNameForMetric(name);
-    var displayNameWidth = strWidth(displayName);
-    if (displayNameWidth > nameLenMax) {
-      nameLenMax = displayNameWidth;
-    }
-
-    if (metric.type == 'trend') {
-      var cols = [];
-      for (let i = 0; i < numTrendColumns; i++) {
-        var tc = options.summaryTrendStats[i];
-        var value = metric.values[tc];
-        if (tc === 'count') {
-          value = value.toString();
-        } else {
-          value = humanizeValue(value, metric, options.summaryTimeUnit);
-        }
-        var valLen = strWidth(value);
-        if (valLen > trendColMaxLens[i]) {
-          trendColMaxLens[i] = valLen;
-        }
-        cols[i] = value;
+    // we use custome metrics to track all response times for all urls
+    // do not want to print out summary data if the metric has a count value and that value is 0
+    // should not block any metrics that do not have a count or that count is not 0
+    if (metric.values.count !== 0) {
+      names.push(name);
+      // When calculating widths for metrics, account for the indentation on submetrics.
+      var displayName = indentForMetric(name) + displayNameForMetric(name);
+      var displayNameWidth = strWidth(displayName);
+      if (displayNameWidth > nameLenMax) {
+        nameLenMax = displayNameWidth;
       }
-      trendCols[name] = cols;
-      return;
-    }
-    var values = nonTrendMetricValueForSum(metric, options.summaryTimeUnit);
-    nonTrendValues[name] = values[0];
-    var valueLen = strWidth(values[0]);
-    if (valueLen > nonTrendValueMaxLen) {
-      nonTrendValueMaxLen = valueLen;
-    }
-    nonTrendExtras[name] = values.slice(1);
-    for (let i = 1; i < values.length; i++) {
-      var extraLen = strWidth(values[i]);
-      if (extraLen > nonTrendExtraMaxLens[i - 1]) {
-        nonTrendExtraMaxLens[i - 1] = extraLen;
+
+      if (metric.type == 'trend') {
+        var cols = [];
+        for (let i = 0; i < numTrendColumns; i++) {
+          var tc = options.summaryTrendStats[i];
+          var value = metric.values[tc];
+          if (tc === 'count') {
+            value = value.toString();
+          } else {
+            value = humanizeValue(value, metric, options.summaryTimeUnit);
+          }
+          var valLen = strWidth(value);
+          if (valLen > trendColMaxLens[i]) {
+            trendColMaxLens[i] = valLen;
+          }
+          cols[i] = value;
+        }
+        trendCols[name] = cols;
+        return;
+      }
+      var values = nonTrendMetricValueForSum(metric, options.summaryTimeUnit);
+      nonTrendValues[name] = values[0];
+      var valueLen = strWidth(values[0]);
+      if (valueLen > nonTrendValueMaxLen) {
+        nonTrendValueMaxLen = valueLen;
+      }
+      nonTrendExtras[name] = values.slice(1);
+      for (let i = 1; i < values.length; i++) {
+        var extraLen = strWidth(values[i]);
+        if (extraLen > nonTrendExtraMaxLens[i - 1]) {
+          nonTrendExtraMaxLens[i - 1] = extraLen;
+        }
       }
     }
   });
