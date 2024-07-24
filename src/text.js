@@ -277,9 +277,14 @@ function summarizeMetrics(options, data, decorate) {
   var numTrendColumns = options.summaryTrendStats.length;
   var trendColMaxLens = new Array(numTrendColumns).fill(0);
   forEach(data.metrics, function (name, metric) {
-    // we use custome metrics to track all response times for all urls
-    // do not want to print out summary data if the metric has a count value and that value is 0
-    // should not block any metrics that do not have a count or that count is not 0
+    // We use custom metrics to track all response times for all urls
+    // see - https://grafana.com/docs/k6/latest/using-k6/http-requests/#url-grouping
+    // and https://community.grafana.com/t/how-to-track-request-duration-for-each-endpoint/98580
+    // do not want to print out summary data for urls that have not been called.
+    // So by including count in the summaryTrendStats option we can determine if
+    // the url has been called by checking if a metric has a count value
+    // and if that value is 0 then we skip to the next metric
+    // This should not skip any metrics that do not have a count or where count > 0
     if (metric.values.count !== 0) {
       names.push(name);
       // When calculating widths for metrics, account for the indentation on submetrics.
